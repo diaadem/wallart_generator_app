@@ -1,0 +1,8 @@
+Flask==2.0.1
+Werkzeug==2.0.3
+openai==0.28
+Pillow==9.5.0
+requests==2.31.0
+python-dotenv==1.0.0
+flask-cors==4.0.0
+stability-sdk==0.8.4

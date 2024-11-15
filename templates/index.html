@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Welcome to Wall Decorator!</title>
+    <style>
+        .drop-area {
+            border: 2px dashed #91bce0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .drop-area.hover {
+            background-color: #92b1d0;
+        }
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #4d6280;
+            width: 80px;
+            height: 80px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal-dialog-centered {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn1 {
+            background-color: #91bce0;
+        }
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            margin: 10px;
+            border: none;
+        }
+        .card img {
+            border-radius: 10px;
+            width: 100%;
+            height: auto;
+        }
+        .selected {
+            border: 3px solid #007bff;
+            background-color: #f0f8ff;
+            transition: background-color 0.3s ease;
+        }
+        .card:hover {
+            background-color: #f8f9fa;
+        }
+        .selected-images-container {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        }
+
+        .new-images-container {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-danger {
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .btn-danger:hover {
+            opacity: 1;
+        }
+        .card {
+        position: relative;
+        }
+
+        .download-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2;
+        }
+
+        .download-icon:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .preview-container {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .scaling-controls {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        #scalePreviewImage {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h1 class="text-center mb-4">Welcome to Wall Decorator!</h1>
+                        <h5 class="text-center mb-4">Please upload an image of the wall you want to decorate:</h5>
+
+                        <!-- Image Upload Area -->
+                        <div id="dropArea" class="drop-area mb-4">
+                            <p>Drag and drop an image here or click to select</p>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                        </div>
+                        <button class="btn btn1 w-100" onclick="document.getElementById('imageInput').click()">Select Image</button>
+
+                        <!-- User Preferences Input -->
+                        <div class="mt-4">
+                            <label for="userPreferences" class="form-label">Your Style Preferences (e.g., rustic, modern, cats):</label>
+                            <input type="text" id="userPreferences" class="form-control" placeholder="Enter style preferences">
+                        </div>
+
+                        <!-- Color Analysis Display -->
+<!--                        <div id="colorAnalysis" class="mt-4 p-3 bg-light rounded" style="display: none;">-->
+<!--                            <h5>Color Analysis:</h5>-->
+<!--                            <p id="colorAnalysisContent"></p>-->
+<!--                        </div>-->
+
+                        <!-- Response Area for Styles -->
+                        <div id="responseArea" class="mt-4 p-3 bg-white rounded">
+                            <div class="row image-gallery"></div>
+                        </div>
+
+                        <!-- "Generate More" Button -->
+                        <button id="generateMoreBtn" class="btn btn-secondary w-100 mt-3" style="display: none;" onclick="generateMore()">Generate More Art</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader Modal -->
+    <div class="modal fade" id="loaderModal" tabindex="-1" role="dialog" aria-labelledby="loaderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body text-center d-flex justify-content-center align-items-center flex-column">
+                    <div class="loader"></div>
+                    <p class="mt-3">Loading... Please wait.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="downloadModalLabel">Scale and Download Artwork</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="preview-container" style="overflow: hidden; text-align: center;">
+                                    <img id="scalePreviewImage" src="" alt="Preview" style="max-width: 100%; height: auto;">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="scaling-controls">
+                                    <h6 class="mb-3">Choose Print Size:</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Width (inches):</label>
+                                        <input type="number" id="printWidth" class="form-control" value="24" min="1" max="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Height (inches):</label>
+                                        <input type="number" id="printHeight" class="form-control" value="16" min="1" max="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">DPI (Dots Per Inch):</label>
+                                        <select id="printDPI" class="form-select">
+                                            <option value="72">72 DPI (Web Quality)</option>
+                                            <option value="150">150 DPI (Good)</option>
+                                            <option value="300" selected>300 DPI (Best)</option>
+                                        </select>
+                                    </div>
+                                    <div class="final-dimensions mt-3">
+                                        <small class="text-muted">Final pixel dimensions: <span id="pixelDimensions"></span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="downloadButton">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const dropArea = document.getElementById('dropArea');
+        const imageInput = document.getElementById('imageInput');
+        // const colorAnalysisDiv = document.getElementById('colorAnalysis');
+        // const colorAnalysisContent = document.getElementById('colorAnalysisContent');
+        const generateMoreBtn = document.getElementById('generateMoreBtn');
+
+        let selectedStyles = [];
+
+        dropArea.addEventListener('click', () => imageInput.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+        ['dragenter', 'dragover'].forEach(eventName => dropArea.classList.add('hover'));
+        ['dragleave', 'drop'].forEach(eventName => dropArea.classList.remove('hover'));
+        dropArea.addEventListener('drop', handleDrop, false);
+        imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            handleFiles(dt.files);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return alert('No file selected.');
+
+            const formData = new FormData();
+            formData.append('image', files[0]);
+            showLoader();
+
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoader();
+                // Remove the color analysis display and directly generate art
+                generateArtStyles();
+            })
+            .catch(error => {
+                hideLoader();
+                console.error('Error:', error);
+            });
+        }
+
+        function generateArtStyles() {
+            const userPreferences = document.getElementById('userPreferences').value;
+            showLoader();
+
+            fetch('/generate_art', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preferences: userPreferences })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoader();
+                handleApiResponse(data);
+                generateMoreBtn.style.display = 'block';
+            })
+            .catch(error => {
+                hideLoader();
+                console.error('Error:', error);
+            });
+        }
+
+        // First, add a container for selected images at the top of your responseArea div
+        const responseArea = document.getElementById('responseArea');
+        if (!responseArea.querySelector('.selected-images-container')) {
+            const selectedContainer = document.createElement('div');
+            // selectedContainer.classList.add('selected-images-container', 'mb-4');
+            // const selectedTitle = document.createElement('h5');
+            // selectedTitle.textContent = 'Your Selected Artworks:';
+            // selectedContainer.appendChild(selectedTitle);
+            const selectedGallery = document.createElement('div');
+            selectedGallery.classList.add('row', 'selected-gallery');
+            selectedContainer.appendChild(selectedGallery);
+            responseArea.insertBefore(selectedContainer, responseArea.firstChild);
+        }
+
+        // Modify the createCard function to handle both download and remove buttons
+        function createCard(style, index, isSelected = false) {
+            const colDiv = document.createElement('div');
+            colDiv.classList.add('col-md-4', 'col-sm-6', 'mb-4');
+
+            const card = document.createElement('div');
+            card.classList.add('card', 'clickable-card');
+            card.style.cursor = 'pointer';
+
+            const image = document.createElement('img');
+            image.src = style.url;
+            image.alt = `Style ${index + 1}`;
+            image.classList.add('card-img-top');
+
+            // Add download icon (right side)
+            const downloadIcon = document.createElement('div');
+            downloadIcon.classList.add('download-icon');
+            downloadIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>`;
+
+            downloadIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDownloadModal(style.url);
+            });
+
+            // Add remove button for selected cards (left side)
+            if (isSelected) {
+                const removeBtn = document.createElement('button');
+                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'position-absolute', 'top-0', 'start-0', 'm-2');
+                removeBtn.innerHTML = '×';
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    colDiv.remove();
+                    // Find and deselect the original card if it exists
+                    const originalCards = document.querySelectorAll('.card');
+                    originalCards.forEach(originalCard => {
+                        if (originalCard.querySelector('img').src === image.src) {
+                            originalCard.classList.remove('selected');
+                        }
+                    });
+                    selectedStyles = selectedStyles.filter(s => s !== style.description);
+                });
+                card.appendChild(removeBtn);
+            }
+
+            const cardBody = document.createElement('div');
+            cardBody.classList.add('card-body');
+            const description = document.createElement('p');
+            description.classList.add('card-text');
+            description.innerHTML = `<strong>${style.description}</strong>`;
+
+            card.appendChild(downloadIcon);
+            card.appendChild(image);
+            card.appendChild(cardBody);
+            colDiv.appendChild(card);
+
+            return { colDiv, card, image };
+        }
+
+        // Update handleApiResponse to use isSelected parameter
+        function handleApiResponse(data) {
+            const responseArea = document.getElementById('responseArea');
+            const selectedGallery = document.querySelector('.selected-gallery');
+            const newImagesContainer = document.createElement('div');
+            newImagesContainer.classList.add('new-images-container', 'mt-4');
+
+            const newImagesTitle = document.createElement('h5');
+            newImagesTitle.textContent = 'New Suggestions:';
+            newImagesContainer.appendChild(newImagesTitle);
+
+            const galleryRow = document.createElement('div');
+            galleryRow.classList.add('row');
+
+            data.forEach((style, index) => {
+                const { colDiv, card, image } = createCard(style, index, false);
+                galleryRow.appendChild(colDiv);
+
+                card.addEventListener('click', () => {
+                    card.classList.toggle('selected');
+                    if (card.classList.contains('selected')) {
+                        selectedStyles.push(style.description);
+                        const selectedCard = createCard(style, index, true).colDiv;
+                        selectedGallery.appendChild(selectedCard);
+                    } else {
+                        selectedStyles = selectedStyles.filter(s => s !== style.description);
+                        const selectedCards = selectedGallery.querySelectorAll('.card');
+                        selectedCards.forEach(selectedCard => {
+                            if (selectedCard.querySelector('img').src === image.src) {
+                                selectedCard.parentElement.remove();
+                            }
+                        });
+                    }
+                });
+            });
+
+            newImagesContainer.appendChild(galleryRow);
+
+            const existingNewImages = responseArea.querySelector('.new-images-container');
+            if (existingNewImages) {
+                existingNewImages.remove();
+            }
+
+            responseArea.appendChild(newImagesContainer);
+        }
+
+        // Add these new functions
+        function openDownloadModal(imageUrl) {
+            currentImageUrl = imageUrl;
+            const modal = new bootstrap.Modal(document.getElementById('downloadModal'));
+            const previewImage = document.getElementById('scalePreviewImage');
+            previewImage.src = imageUrl;
+            updatePixelDimensions();
+            modal.show();
+        }
+
+        function updatePixelDimensions() {
+            const width = document.getElementById('printWidth').value;
+            const height = document.getElementById('printHeight').value;
+            const dpi = document.getElementById('printDPI').value;
+
+            const pixelWidth = Math.round(width * dpi);
+            const pixelHeight = Math.round(height * dpi);
+
+            document.getElementById('pixelDimensions').textContent =
+                `${pixelWidth}px × ${pixelHeight}px`;
+        }
+
+        // Add event listeners for the scaling controls
+        document.getElementById('printWidth').addEventListener('input', updatePixelDimensions);
+        document.getElementById('printHeight').addEventListener('input', updatePixelDimensions);
+        document.getElementById('printDPI').addEventListener('change', updatePixelDimensions);
+
+        // Download button click handler
+        document.getElementById('downloadButton').addEventListener('click', async () => {
+            const width = document.getElementById('printWidth').value;
+            const height = document.getElementById('printHeight').value;
+            const dpi = document.getElementById('printDPI').value;
+
+            try {
+                // Show loader
+                showLoader();
+
+                // Create a temporary canvas to scale the image
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas dimensions
+                canvas.width = Math.round(width * dpi);
+                canvas.height = Math.round(height * dpi);
+
+                // Create new image object
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+
+                img.onload = () => {
+                    // Draw and scale image
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Convert to blob and download
+                    canvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `artwork_${width}x${height}_${dpi}dpi.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        hideLoader();
+
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('downloadModal'));
+                        modal.hide();
+                    }, 'image/png', 1.0);
+                };
+
+                img.src = currentImageUrl;
+
+            } catch (error) {
+                console.error('Error downloading image:', error);
+                hideLoader();
+                alert('Error downloading image. Please try again.');
+            }
+        });
+
+
+        // Update the generateMore function to pass selected styles
+        function generateMore() {
+            showLoader();
+
+            fetch('/refine_art', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    liked_pieces: selectedStyles,
+                    preferences: document.getElementById('userPreferences').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoader();
+                handleApiResponse(data);
+            })
+            .catch(error => {
+                hideLoader();
+                console.error('Error generating more items:', error);
+            });
+        }
+
+        function showLoader() {
+            const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'), { backdrop: 'static', keyboard: false });
+            loaderModal.show();
+        }
+        function hideLoader() {
+            const loaderModalElement = document.getElementById('loaderModal');
+            const loaderModal = bootstrap.Modal.getInstance(loaderModalElement);
+            if (loaderModal) loaderModal.hide();
+        }
+    </script>
+</body>
+</html>
