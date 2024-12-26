@@ -1,9 +1,9 @@
-# Wall Decorator AI
+# WallArtAI
 
 An AI-powered web application that helps users choose and generate perfect wall art based on their room's color scheme and personal preferences. The app analyzes room photos using GPT-4 Vision and generates customized artwork suggestions using Stability AI.
 
 ## 🎥 Demo
-[https://www.youtube.com/watch?v=q9eP2Vp-6TM&ab_channel=dra2140]
+[https://www.youtube.com/watch?v=DwhR4Tal1Jg]
 
 ## ✨ Features
 
